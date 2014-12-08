@@ -78,7 +78,7 @@ vim /etc/shadowsocks.json
 
 {
     "server":"yourVPSIP",
-    "server_port":8388,
+    "server_port":8888,
     "local_address": "127.0.0.1",
     "local_port":65510,
     "password":"fuckgfw",
