@@ -1,0 +1,92 @@
+shadowsocks 是一个轻量级隧道 socks5 代理，可加密网络通道。
+项目主页：https://github.com/clowwindy/shadowsocks
+官方wiki：https://github.com/clowwindy/shadowsocks/wiki/Shadowsocks
+
+说明：
+此教程为官方wiki补充，并附带M2Crypto、gevent 安装的详细说明，以便于零基础用户配置 shadowsocks 服务端。
+系统 CentOS6.6 x86，内建Python版本2.6.6(可使用 python -V 命令查看)
+
+准备工作：安装所需组件
+yum -y install gcc* readline readline-devel sqlite-devel bzip2-devel openssl openssl-devel gdbm-devel libdbi-devel ncurses-libs ncurses* zlib-devel
+
+一、升级python
+如果提示 zipimport.ZipImportError: can't decompress data; zlib not available,说明需要安装zlib库
+wget -c http://python.org/ftp/python/2.7.8/Python-2.7.8.tgz
+tar zxvf Python-2.7.8.tgz
+cd Python-2.7.8
+./configure --with-threads --enable-shared
+make && make install
+
+cd /Python-2.7.8/Modules/zlib
+./configure
+make & make install
+
+echo "/usr/local/lib" >> /etc/ld.so.conf.d/python2.7.conf
+ldconfig
+
+mv /usr/bin/python /usr/bin/python2.6.6
+ln -s /usr/local/bin/python2.7 /usr/bin/python
+
+vim /usr/bin/yum
+#!/usr/bin/python2.6.6
+
+二、安装pip步骤
+首先安装setuptools: 
+#https://pypi.python.org/packages/source/s/setuptools/
+wget --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz
+tar zxvf setuptools-7.0.tar.gz
+cd setuptools-7.0
+python setup.py build
+python setup.py install
+#easy_install --version
+
+安装Pip：
+wget --no-check-certificate https://pypi.python.org/packages/source/p/pip/pip-1.5.6.tar.gz
+tar zxvf pip-1.5.6.tar.gz
+cd pip-1.5.6
+python setup.py build
+python setup.py install
+
+测试,安装个软件包试试：
+pip install simplejson
+
+三、安装shadowsocks
+由于安装了pip所以很简单了，安装Gevent M2Crypto（小内存VPS上可能无法通过）
+
+注意安装M2Crypto之前先要安装swig包,不然后面报错
+安装swig:
+yum里swig版本太旧
+wget http://softlayer-sng.dl.sourceforge.net/project/swig/swig/swig-3.0.2/swig-3.0.2.tar.gz
+tar zxvf swig-3.0.2.tar.gz 
+cd swig-3.0.2
+./configure 
+make && make install
+swig -version
+
+pip install M2Crypto
+pip install greenlet
+pip install gevent
+pip install shadowsocks
+
+四、安装M2Crypto
+shadowsocks支持以下加密方式：
+aes-128-cfb、aes-192-cfb、aes-256-cfb、bf-cfb、camellia-128-cfb、camellia-192-cfb、camellia-256-cfb、cast5-cfb、des-cfb、idea-cfb、rc2-cfb、rc4、seed-cfb、table
+默认加密方法 table 速度很快，但很不安全，推荐使用 "aes-256-cfb"或者 "bf-cfb",使用加密必须安装M2Crypto。
+
+文件格式：
+vim /etc/shadowsocks.json
+
+{
+    "server":"yourVPSIP",
+    "server_port":8388,
+    "local_address": "127.0.0.1",
+    "local_port":65510,
+    "password":"fuckgfw",
+    "timeout":300,
+    "method":"aes-256-cfb",
+    "fast_open": false,
+    "workers": 1
+}
+
+启动
+/usr/bin/nohup ssserver -c /etc/shadowsocks.json > /dev/null 2>&1 &
